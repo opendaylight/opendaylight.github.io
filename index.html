@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OpenDaylight - The Open Source SDN Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #08070a;
+    --bg: #0e0d14;
+    --surface: #14131c;
+    --surface-2: #1c1a27;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f3f1f0;
+    --text-muted: #9a918a;
+    --text-dim: #655c55;
+    --signal: #f5a623;       /* ODL orange/gold */
+    --signal-2: #ffcc44;     /* warm gold */
+    --signal-bright: #ffb740;
+    --hot: #ff6b3d;          /* alert ember */
+    --cool: #60e2ff;         /* secondary cool accent */
+    --grid-line: rgba(245,166,35,0.04);
+
+    --display: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Layered background: subtle grid + warm radial glow */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: radial-gradient(ellipse at top, black 30%, transparent 75%);
+  }
+  body::after {
+    content: "";
+    position: fixed; top: -20%; left: 50%;
+    width: 1200px; height: 800px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(245,166,35,0.08), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  img, svg { display: block; max-width: 100%; }
+
+  .container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 32px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mono { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.04em; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .kicker::before {
+    content: "";
+    width: 24px; height: 1px;
+    background: var(--signal);
+  }
+
+  /* ---------- TOP UTILITY BAR ---------- */
+  .topbar {
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,7,10,0.6);
+    backdrop-filter: blur(8px);
+    position: relative;
+    z-index: 50;
+  }
+  .topbar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+  }
+  .topbar a { color: var(--text-muted); }
+  .topbar a:hover { color: var(--signal); }
+  .topbar-right { display: flex; gap: 24px; }
+
+  /* ---------- HEADER ---------- */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,7,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .logo-mark img {
+    width: 36px; height: 36px;
+    object-fit: contain;
+  }
+  .logo-text {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+  }
+  .logo-text span {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    display: block;
+    margin-top: -2px;
+    text-transform: uppercase;
+  }
+
+  .nav {
+    display: flex;
+    gap: 36px;
+    font-size: 0.92rem;
+    font-weight: 400;
+  }
+  .nav a {
+    color: var(--text-muted);
+    transition: color 0.2s;
+    position: relative;
+    padding: 6px 0;
+  }
+  .nav a:hover { color: var(--text); }
+  .nav a::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 100%; bottom: 0;
+    height: 1px;
+    background: var(--signal);
+    transition: right 0.3s ease;
+  }
+  .nav a:hover::after { right: 0; }
+
+  .header-actions { display: flex; align-items: center; gap: 20px; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--signal); color: var(--signal); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 0.92rem;
+    transition: all 0.25s;
+  }
+  .btn-primary {
+    background: var(--signal);
+    color: var(--void);
+  }
+  .btn-primary:hover {
+    background: var(--text);
+    box-shadow: 0 0 0 4px rgba(245,166,35,0.15);
+  }
+  .btn-ghost {
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+  }
+  .btn-ghost:hover { border-color: var(--signal); color: var(--signal); }
+
+  /* ---------- HAMBURGER (MOBILE) ---------- */
+  .hamburger {
+    display: none;
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    place-items: center;
+    cursor: pointer;
+    background: none;
+    color: var(--text);
+  }
+  .hamburger:hover { border-color: var(--signal); color: var(--signal); }
+
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 140px 0 160px;
+    position: relative;
+    text-align: center;
+  }
+  .hero-grid {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .hero-eyebrow {
+    margin-bottom: 36px;
+  }
+  .hero-eyebrow .kicker { justify-content: center; }
+  .hero-eyebrow .kicker::before,
+  .hero-eyebrow .kicker::after {
+    content: "";
+    width: 24px; height: 1px;
+    background: var(--signal);
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2.8rem, 6vw, 5.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    margin-bottom: 32px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    font-weight: 500;
+    background: linear-gradient(120deg, var(--signal), var(--signal-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    font-size: 1.18rem;
+    color: var(--text-muted);
+    max-width: 620px;
+    margin: 0 auto 48px;
+    line-height: 1.55;
+  }
+  .hero-ctas {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 64px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-trust {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-trust .dot {
+    width: 6px; height: 6px;
+    background: var(--signal);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--signal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ---------- STATS STRIP ---------- */
+  .stats {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, transparent, rgba(245,166,35,0.02));
+    padding: 56px 0;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 48px;
+  }
+  .stat {
+    border-left: 1px solid var(--border);
+    padding-left: 24px;
+  }
+  .stat-num {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2.4rem, 4vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, var(--text), var(--text-muted));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-num span { color: var(--signal); -webkit-text-fill-color: var(--signal); font-size: 0.6em; vertical-align: top; margin-left: 2px; }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ---------- SECTION HEADERS ---------- */
+  section { padding: 120px 0; position: relative; }
+  .section-head {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 80px;
+    margin-bottom: 80px;
+    align-items: end;
+  }
+  .section-head h2 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2rem, 3.6vw, 3.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .section-head h2 em {
+    font-style: normal;
+    font-weight: 500;
+    background: linear-gradient(120deg, var(--signal), var(--signal-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .section-head p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 540px;
+  }
+  .section-tag {
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  /* ---------- CAPABILITIES (3-PILLAR) ---------- */
+  .capabilities { padding-top: 100px; padding-bottom: 100px; }
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+  .pillar {
+    padding: 48px 36px 48px 0;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .pillar:last-child { border-right: none; padding-right: 0; }
+  .pillar:not(:first-child) { padding-left: 36px; }
+  .pillar-num {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 80px;
+    display: block;
+  }
+  .pillar h3 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 1.7rem;
+    line-height: 1.15;
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+  .pillar p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+  .pillar-link {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: gap 0.25s;
+  }
+  .pillar-link:hover { gap: 14px; }
+
+  /* ---------- ARCHITECTURE DIAGRAM ---------- */
+  .architecture-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+  }
+  .architecture-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--signal), transparent);
+  }
+  .arch-content { padding: 64px; }
+  .arch-content .kicker { margin-bottom: 24px; }
+  .arch-content h3 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: 2.4rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  .arch-content p {
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+  .arch-meta {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .arch-meta div { font-family: var(--mono); font-size: 0.75rem; }
+  .arch-meta strong { color: var(--signal); display: block; font-size: 1.1rem; font-family: var(--display); font-weight: 400; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .arch-meta span { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+  .arch-visual {
+    position: relative;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(245,166,35,0.12), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(255,204,68,0.10), transparent 50%);
+    border-left: 1px solid var(--border);
+    overflow: hidden;
+    min-height: 420px;
+  }
+
+  /* ---------- PROJECTS GRID ---------- */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .project-card:hover {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    transform: translateY(-4px);
+  }
+  .project-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: var(--signal);
+    transition: width 0.4s;
+  }
+  .project-card:hover::after { width: 100%; }
+  .project-card h4 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .project-card h4 .tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--signal);
+    border: 1px solid rgba(245,166,35,0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 400;
+  }
+  .project-card .desc {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+  .project-card .proj-link {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: gap 0.25s;
+  }
+  .project-card .proj-link:hover { gap: 14px; }
+
+  /* ---------- RELEASES ---------- */
+  .releases-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .release-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    background: var(--surface);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .release-card.current {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border-color: var(--signal);
+  }
+  .release-card.current::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--signal), transparent);
+  }
+  .release-card:hover {
+    border-color: var(--border-strong);
+  }
+  .release-tag {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    color: var(--signal);
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .release-card h3 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 2rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .release-version {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .release-card p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin-bottom: 28px;
+  }
+  .release-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* ---------- GETTING STARTED ---------- */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .step-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    background: var(--surface);
+    transition: all 0.3s;
+    position: relative;
+  }
+  .step-card:hover {
+    background: var(--surface-2);
+    border-color: var(--signal);
+  }
+  .step-num {
+    font-family: var(--mono);
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: rgba(245,166,35,0.2);
+    margin-bottom: 20px;
+    line-height: 1;
+  }
+  .step-card h4 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+  }
+  .step-card p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  .step-card code {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--signal);
+    background: rgba(245,166,35,0.06);
+    border: 1px solid rgba(245,166,35,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    line-height: 1.6;
+    word-break: break-all;
+    overflow-x: auto;
+  }
+
+  /* ---------- COMMUNITY ---------- */
+  .community-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .comm-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    background: var(--surface);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+  }
+  .comm-card:hover {
+    background: var(--surface-2);
+    border-color: var(--signal);
+    transform: translateY(-4px);
+  }
+  .comm-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--signal), var(--signal-2));
+    transition: width 0.4s;
+  }
+  .comm-card:hover::after { width: 100%; }
+  .comm-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.2);
+    display: grid;
+    place-items: center;
+    margin-bottom: 24px;
+    color: var(--signal);
+  }
+  .comm-card h4 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  .comm-card p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: 20px;
+  }
+  .comm-link {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---------- SOLUTIONS ---------- */
+  .solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .solution-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 28px;
+    background: var(--surface);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .solution-card:hover {
+    background: var(--surface-2);
+    border-color: var(--signal);
+    transform: translateY(-4px);
+  }
+  .solution-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--signal), var(--signal-2));
+    transition: width 0.4s;
+  }
+  .solution-card:hover::after { width: 100%; }
+  .solution-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.2);
+    display: grid;
+    place-items: center;
+    margin-bottom: 24px;
+    color: var(--signal);
+  }
+  .solution-card h4 {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  .solution-card p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .solution-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .solution-tags span {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+  }
+
+  /* ---------- USER STORIES ---------- */
+  .stories-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+  .story-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    background: var(--surface);
+    position: relative;
+  }
+  .story-card::before {
+    content: "\201C";
+    font-family: var(--display);
+    font-size: 4rem;
+    line-height: 1;
+    color: rgba(245,166,35,0.2);
+    position: absolute;
+    top: 24px; left: 32px;
+  }
+  .story-quote {
+    color: var(--text);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    padding-top: 16px;
+  }
+  .story-author {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+  .story-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(245,166,35,0.2), rgba(255,204,68,0.1));
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--signal);
+    font-weight: 500;
+  }
+  .story-name {
+    font-weight: 500;
+    font-size: 0.92rem;
+  }
+  .story-role {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- TSC GOVERNANCE ---------- */
+  .tsc-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .tsc-info p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .tsc-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+  .tsc-members-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    background: var(--surface);
+  }
+  .tsc-members-card h4 {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 24px;
+  }
+  .tsc-member {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+  .tsc-member:first-of-type { border-top: none; }
+  .tsc-member-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.2);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--signal);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .tsc-member-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .tsc-member-name {
+    font-weight: 500;
+    font-size: 0.92rem;
+  }
+  .tsc-member-org {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+  .tsc-note {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---------- JOIN CTA ---------- */
+  .join-cta {
+    padding: 140px 0;
+    text-align: center;
+    position: relative;
+  }
+  .join-cta::before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(245,166,35,0.06), transparent 60%);
+    pointer-events: none;
+  }
+  .join-cta .container { max-width: 880px; }
+  .join-cta h2 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin-bottom: 28px;
+  }
+  .join-cta h2 em {
+    font-style: normal;
+    font-weight: 500;
+    background: linear-gradient(120deg, var(--signal), var(--signal-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .join-cta p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-bottom: 48px;
+    max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+  }
+  .newsletter-form {
+    display: flex;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 6px;
+    max-width: 480px;
+    margin: 0 auto 24px;
+    transition: border-color 0.3s;
+  }
+  .newsletter-form:focus-within {
+    border-color: var(--signal);
+    box-shadow: 0 0 0 4px rgba(245,166,35,0.1);
+  }
+  .newsletter-form input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    padding: 12px 20px;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    outline: none;
+  }
+  .newsletter-form input::placeholder { color: var(--text-dim); }
+  .newsletter-form button {
+    padding: 12px 24px;
+    background: var(--signal);
+    color: var(--void);
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  .newsletter-form button:hover { background: var(--text); }
+  .join-cta .small {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 72px 0 36px;
+    background: var(--void);
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    gap: 56px;
+    margin-bottom: 64px;
+  }
+  .footer-brand p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin-top: 20px;
+    max-width: 320px;
+  }
+  .footer-col h5 {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 20px;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col li { margin-bottom: 12px; }
+  .footer-col a {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: var(--signal); }
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+  .footer-social { display: flex; gap: 16px; }
+  .footer-social a {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .footer-social a:hover {
+    border-color: var(--signal);
+    color: var(--signal);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 1024px) {
+    .nav { display: none; }
+    .hamburger { display: grid; }
+    .hero { padding: 100px 0 120px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+    .cap-grid { grid-template-columns: 1fr; }
+    .pillar { border-right: none; border-bottom: 1px solid var(--border); padding: 36px 0 !important; }
+    .pillar:last-child { border-bottom: none; }
+    .pillar-num { margin-bottom: 24px; }
+    .architecture-card { grid-template-columns: 1fr; }
+    .arch-content { padding: 40px; }
+    .arch-visual { min-height: 300px; border-left: none; border-top: 1px solid var(--border); }
+    .projects-grid { grid-template-columns: repeat(2, 1fr); }
+    .releases-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: repeat(2, 1fr); }
+    .community-grid { grid-template-columns: repeat(2, 1fr); }
+    .solutions-grid { grid-template-columns: repeat(2, 1fr); }
+    .stories-grid { grid-template-columns: 1fr; }
+    .tsc-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 40px; }
+    .section-head { grid-template-columns: 1fr; gap: 24px; align-items: start; }
+  }
+  @media (max-width: 640px) {
+    .container { padding: 0 20px; }
+    section { padding: 80px 0; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stat { border-left: none; padding-left: 0; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .solutions-grid { grid-template-columns: 1fr; }
+    .community-grid { grid-template-columns: 1fr; }
+    .steps-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .topbar-right { display: none; }
+    .header-actions .btn-ghost { display: none; }
+    .newsletter-form { flex-direction: column; border-radius: 16px; padding: 8px; }
+    .newsletter-form button { border-radius: 12px; }
+    .arch-meta { flex-direction: column; gap: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP UTILITY BAR -->
+<div class="topbar">
+  <div class="container topbar-inner">
+    <a href="https://lfnetworking.org">Part of LF Networking, a Linux Foundation project</a>
+    <div class="topbar-right">
+      <a href="https://docs.opendaylight.org">Docs</a>
+      <a href="https://lf-opendaylight.atlassian.net/wiki">Wiki</a>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container header-inner">
+    <a class="logo" href="#">
+      <div class="logo-mark">
+        <img src="./src/images/odl-logo.svg" alt="OpenDaylight logo">
+      </div>
+      <div class="logo-text">
+        Open<b style="color: var(--signal); font-weight: 500;">Daylight</b>
+        <span>Open SDN Platform</span>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="#about">About</a>
+      <a href="#projects">Ecosystem</a>
+      <a href="#releases">Releases</a>
+      <a href="#get-started">Get Started</a>
+      <a href="#community">Community</a>
+      <a href="#governance">Governance</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="icon-btn" aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <a href="https://docs.opendaylight.org" class="btn btn-ghost">Documentation</a>
+      <a href="#get-started" class="btn btn-primary">
+        Get Started
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </a>
+      <button class="hamburger" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <div class="hero-eyebrow">
+        <span class="kicker">Open Source SDN Platform . Since 2013</span>
+      </div>
+      <h1>Programmable networks, <em>open by design.</em></h1>
+      <p class="hero-sub">
+        OpenDaylight is the most widely deployed open source SDN controller on the planet. Model-driven, modular, and highly extensible, it provides centralized, programmable control and monitoring for networks of any size and scale.
+      </p>
+      <div class="hero-ctas">
+        <a href="https://docs.opendaylight.org/en/latest/downloads.html" class="btn btn-primary">
+          Download Latest
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        </a>
+        <a href="https://docs.opendaylight.org" class="btn btn-ghost">Read the docs</a>
+      </div>
+      <div class="hero-trust">
+        <span class="dot"></span>
+        Trusted by 1B+ network subscribers worldwide
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats" style="padding: 56px 0;">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-num">10<span>+</span></div>
+        <div class="stat-label">Years in Production</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">50<span>+</span></div>
+        <div class="stat-label">Active Projects & Plugins</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1B<span>+</span></div>
+        <div class="stat-label">Subscribers on ODL Networks</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">23</div>
+        <div class="stat-label">Named Releases (& Counting)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="capabilities" id="about">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Core Capabilities</span>
+        <h2>Your network's <em>operating system.</em></h2>
+      </div>
+      <p>OpenDaylight sits between your applications and your network hardware, providing a unified abstraction layer. A model-driven architecture built on YANG means every interface is programmatic, every behavior is predictable.</p>
+    </div>
+
+    <div class="cap-grid">
+      <div class="pillar">
+        <span class="pillar-num">01 / Model-Driven</span>
+        <h3>YANG-modeled, contract-first APIs.</h3>
+        <p>Every network service, protocol plugin, and application interface in OpenDaylight is defined through YANG models. This means auto-generated REST APIs, consistent data stores, and a single source of truth for how your network behaves.</p>
+        <a href="https://docs.opendaylight.org" class="pillar-link">Explore YANG tools &#8594;</a>
+      </div>
+      <div class="pillar">
+        <span class="pillar-num">02 / Protocol Agnostic</span>
+        <h3>One controller, every protocol.</h3>
+        <p>OpenFlow, NETCONF, BGP-LS, PCEP, OVSDB, LISP, SNMP, and more. OpenDaylight's southbound plugin architecture lets you manage heterogeneous networks through a single control point without vendor lock-in.</p>
+        <a href="https://docs.opendaylight.org" class="pillar-link">See supported protocols &#8594;</a>
+      </div>
+      <div class="pillar">
+        <span class="pillar-num">03 / Clustering & Scale</span>
+        <h3>Carrier-grade by design.</h3>
+        <p>Built-in clustering, sharded data stores, and leader-based consensus let OpenDaylight scale horizontally across nodes. Production deployments manage thousands of network devices with sub-second convergence.</p>
+        <a href="https://docs.opendaylight.org" class="pillar-link">Read the architecture &#8594;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section style="padding-top: 40px;">
+  <div class="container">
+    <div class="architecture-card">
+      <div class="arch-content">
+        <span class="kicker">Platform Architecture</span>
+        <h3>A layered, extensible architecture.</h3>
+        <p>OpenDaylight's modular design separates applications from protocols through a service abstraction layer (MD-SAL). Northbound REST APIs expose network state to applications, while southbound plugins translate intent into device-level operations.</p>
+
+        <div class="arch-meta">
+          <div>
+            <strong>50+</strong>
+            <span>Plugin Projects</span>
+          </div>
+          <div>
+            <strong>10+</strong>
+            <span>Protocols</span>
+          </div>
+          <div>
+            <strong>108</strong>
+            <span>Git Repositories</span>
+          </div>
+        </div>
+
+        <a href="https://docs.opendaylight.org" class="btn btn-primary">
+          Read the docs
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="arch-visual">
+        <svg viewBox="0 0 500 500" style="width:100%;height:100%;">
+          <defs>
+            <linearGradient id="layerG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f5a623" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#ffcc44" stop-opacity="0.10"/>
+            </linearGradient>
+          </defs>
+
+          <g font-family="Geist Mono, monospace" font-size="10" fill="#9a918a" letter-spacing="0.1em">
+            <!-- Northbound -->
+            <rect x="60" y="60" width="380" height="56" fill="url(#layerG)" stroke="#f5a623" stroke-opacity="0.4" rx="6"/>
+            <text x="80" y="82" fill="#f3f1f0" font-size="12">NORTHBOUND APPLICATIONS</text>
+            <text x="80" y="100">restconf . netconf . openflow apps</text>
+
+            <!-- MD-SAL -->
+            <rect x="60" y="136" width="380" height="56" fill="url(#layerG)" stroke="#ffcc44" stroke-opacity="0.4" rx="6"/>
+            <text x="80" y="158" fill="#f3f1f0" font-size="12">MD-SAL (SERVICE ABSTRACTION)</text>
+            <text x="80" y="176">data store . rpc broker . notifications</text>
+
+            <!-- Core Services -->
+            <rect x="60" y="212" width="380" height="56" fill="url(#layerG)" stroke="#f5a623" stroke-opacity="0.4" rx="6"/>
+            <text x="80" y="234" fill="#f3f1f0" font-size="12">CORE SERVICES</text>
+            <text x="80" y="252">clustering . aaa . persistence . config</text>
+
+            <!-- Southbound Plugins -->
+            <rect x="60" y="288" width="380" height="56" fill="url(#layerG)" stroke="#ffcc44" stroke-opacity="0.4" rx="6"/>
+            <text x="80" y="310" fill="#f3f1f0" font-size="12">SOUTHBOUND PLUGINS</text>
+            <text x="80" y="328">openflow . netconf . ovsdb . bgp . pcep</text>
+
+            <!-- Network -->
+            <rect x="60" y="364" width="380" height="56" fill="url(#layerG)" stroke="#f5a623" stroke-opacity="0.3" rx="6"/>
+            <text x="80" y="386" fill="#f3f1f0" font-size="12">PHYSICAL / VIRTUAL NETWORK</text>
+            <text x="80" y="404">switches . routers . firewalls . vnfs</text>
+          </g>
+
+          <!-- Connecting arrows -->
+          <g stroke="#f5a623" stroke-opacity="0.3" stroke-width="1" fill="none" stroke-dasharray="4 4">
+            <path d="M250 116 L250 136"/>
+            <path d="M250 192 L250 212"/>
+            <path d="M250 268 L250 288"/>
+            <path d="M250 344 L250 364"/>
+          </g>
+
+          <!-- Side label -->
+          <text x="460" y="240" font-family="Geist Mono, monospace" font-size="9" fill="#655c55" letter-spacing="0.15em" text-anchor="end" transform="rotate(-90 460 240)">OPENDAYLIGHT CONTROLLER</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KEY PROJECTS -->
+<section id="projects">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Ecosystem</span>
+        <h2>Core projects and<br/><em>protocols.</em></h2>
+      </div>
+      <p>OpenDaylight is composed of over 50 projects covering protocol plugins, data models, core infrastructure, and applications. Here are some of the most active and widely adopted.</p>
+    </div>
+
+    <div class="projects-grid">
+      <div class="project-card">
+        <h4>NETCONF <span class="tag">Protocol</span></h4>
+        <div class="desc">Network configuration protocol implementation providing YANG-model-driven configuration and monitoring of network devices.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+
+      <div class="project-card">
+        <h4>BGPCEP <span class="tag">Protocol</span></h4>
+        <div class="desc">BGP and PCEP protocol implementations enabling path computation, traffic engineering, and topology discovery in carrier networks.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+
+      <div class="project-card">
+        <h4>TransportPCE <span class="tag">Application</span></h4>
+        <div class="desc">Control and management of optical transport networks using OpenROADM device models, enabling multi-vendor optical path provisioning.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+
+      <div class="project-card">
+        <h4>YANG Tools <span class="tag">Core</span></h4>
+        <div class="desc">The foundation of ODL's model-driven architecture: YANG parser, code generator, and data binding runtime.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+
+      <div class="project-card">
+        <h4>Controller <span class="tag">Core</span></h4>
+        <div class="desc">The central infrastructure providing clustering, the distributed data store, and the MD-SAL framework that all other projects build on.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+
+      <div class="project-card">
+        <h4>AAA <span class="tag">Security</span></h4>
+        <div class="desc">Authentication, authorization, and accounting framework providing role-based access control for all ODL northbound interfaces.</div>
+        <a href="#" class="proj-link">View project &#8594;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELEASES -->
+<section id="releases" style="padding-top: 60px;">
+
+<!-- SOLUTIONS -->
+<section style="padding-top: 60px;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Solutions</span>
+        <h2>Where OpenDaylight<br/><em>runs today.</em></h2>
+      </div>
+      <p>From optical transport to data center fabrics to carrier-scale automation, OpenDaylight powers production networks across use cases that demand programmability, scale, and vendor neutrality.</p>
+    </div>
+
+    <div class="solutions-grid">
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 20h20"/><path d="M5 20V10l7-7 7 7v10"/><path d="M9 20v-6h6v6"/></svg>
+        </div>
+        <h4>Multi-Layer Transport Control</h4>
+        <p>OpenDaylight's TransportPCE project enables optical path provisioning across multi-vendor transport networks using OpenROADM device models, automating L0/L1 operations at scale.</p>
+        <div class="solution-tags">
+          <span>TransportPCE</span>
+          <span>OpenROADM</span>
+          <span>Optical</span>
+        </div>
+      </div>
+
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20a14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        </div>
+        <h4>Service Provider WAN Automation</h4>
+        <p>Carriers use BGPCEP and NETCONF to automate traffic engineering, path computation, and device configuration across large-scale MPLS and segment routing networks.</p>
+        <div class="solution-tags">
+          <span>BGP-LS</span>
+          <span>PCEP</span>
+          <span>NETCONF</span>
+        </div>
+      </div>
+
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+        </div>
+        <h4>Data Center SDN</h4>
+        <p>Programmable overlay and underlay management using OpenFlow and OVSDB for data center switching fabrics, enabling microsegmentation and automated provisioning.</p>
+        <div class="solution-tags">
+          <span>OpenFlow</span>
+          <span>OVSDB</span>
+          <span>Overlay</span>
+        </div>
+      </div>
+
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <h4>Network Telemetry and AI</h4>
+        <p>Vanadium's native gNMI support enables push-based telemetry from modern fabrics like SONiC, feeding real-time network state into AI/ML pipelines for anomaly detection and autonomous operations.</p>
+        <div class="solution-tags">
+          <span>gNMI</span>
+          <span>Telemetry</span>
+          <span>SONiC</span>
+        </div>
+      </div>
+
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </div>
+        <h4>Enterprise Network Control</h4>
+        <p>Centralized, model-driven management of heterogeneous enterprise networks. ODL's protocol-agnostic architecture handles switches, routers, and firewalls from any vendor through a single pane.</p>
+        <div class="solution-tags">
+          <span>NETCONF</span>
+          <span>RESTCONF</span>
+          <span>Multi-vendor</span>
+        </div>
+      </div>
+
+      <div class="solution-card">
+        <div class="solution-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        </div>
+        <h4>ONAP Integration</h4>
+        <p>OpenDaylight serves as the SDN controller within ONAP's network automation platform, providing NETCONF-based device management and service orchestration for telecom workloads.</p>
+        <div class="solution-tags">
+          <span>ONAP</span>
+          <span>LFN</span>
+          <span>Orchestration</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Releases</span>
+        <h2>Named after the<br/><em>periodic table.</em></h2>
+      </div>
+      <p>Each OpenDaylight release is named after a chemical element. From Hydrogen to Chromium, each release brings improved scalability, security, and protocol support.</p>
+    </div>
+
+    <div class="releases-grid">
+      <div class="release-card current">
+        <span class="release-tag">Current Release</span>
+        <h3>Vanadium</h3>
+        <div class="release-version">SR1 . April 22, 2026 . karaf 0.23.1</div>
+        <p>The 23rd named OpenDaylight release. Vanadium introduces native gNMI support for modern network fabrics, transitions to Java 21 with Linux-native networking optimizations, and continues the evolution toward a cleaner, more modular codebase.</p>
+        <div class="release-links">
+          <a href="https://docs.opendaylight.org/en/latest/downloads.html" class="btn btn-primary">
+            Download
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          </a>
+          <a href="https://docs.opendaylight.org/en/stable-vanadium/release-notes/index.html" class="btn btn-ghost">Release Notes</a>
+        </div>
+      </div>
+
+      <div class="release-card">
+        <span class="release-tag">Prior Stable</span>
+        <h3>Titanium</h3>
+        <div class="release-version">SR2 . April 10, 2026 . karaf 0.22.2</div>
+        <p>Production-proven prior release with full security patches. Includes the mature MD-SAL data store, NETCONF scalability improvements, and a stable Karaf distribution for deployments not yet ready to upgrade.</p>
+        <div class="release-links">
+          <a href="https://docs.opendaylight.org/en/latest/downloads.html" class="btn btn-ghost">Download</a>
+          <a href="https://docs.opendaylight.org/en/stable-titanium/release-notes/index.html" class="btn btn-ghost">Release Notes</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GETTING STARTED -->
+<section id="get-started">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Get Started</span>
+        <h2>Up and running in<br/><em>four steps.</em></h2>
+      </div>
+      <p>Whether you are evaluating OpenDaylight for the first time or deploying it in production, the process starts the same way. Pre-built binaries and Docker images make setup fast.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <h4>Prerequisites</h4>
+        <p>Ensure you have Java 21 (or later) installed. OpenDaylight runs on Linux, macOS, and Windows.</p>
+        <code>java -version</code>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <h4>Download</h4>
+        <p>Grab the latest Vanadium release as a tar.gz or zip archive from the downloads page.</p>
+        <code>wget https://nexus.opendaylight.org/content/repositories/opendaylight.release/org/opendaylight/integration/karaf/0.23.1/karaf-0.23.1.tar.gz</code>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <h4>Launch Karaf</h4>
+        <p>Extract and start the Karaf container. The ODL controller will boot and listen for feature installs.</p>
+        <code>tar xf karaf-0.23.1.tar.gz<br/>cd karaf-0.23.1<br/>./bin/karaf</code>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <h4>Install Features</h4>
+        <p>Install the features you need. RESTCONF for REST APIs, NETCONF for device management, etc.</p>
+        <code>feature:install odl-restconf-all<br/>feature:install odl-netconf-topology</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USER STORIES -->
+<section>
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ User Stories</span>
+        <h2>Trusted by the networks<br/><em>that matter.</em></h2>
+      </div>
+      <p>Organizations worldwide rely on OpenDaylight to power their production networks. Here is what the community says about building on the platform.</p>
+    </div>
+
+    <div class="stories-grid">
+      <div class="story-card">
+        <div class="story-quote">OpenDaylight is the most widely deployed open source SDN controller. Its model-driven architecture and NETCONF/YANG foundation make it the natural choice for automating carrier-grade transport networks at scale.</div>
+        <div class="story-author">
+          <div class="story-avatar">PT</div>
+          <div>
+            <div class="story-name">PANTHEON.tech</div>
+            <div class="story-role">Largest contributor to OpenDaylight</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-card">
+        <div class="story-quote">We built our TransportPCE solution on OpenDaylight because it gave us vendor-neutral optical path provisioning with OpenROADM support out of the box. The controller's extensibility lets us evolve at our own pace.</div>
+        <div class="story-author">
+          <div class="story-avatar">OR</div>
+          <div>
+            <div class="story-name">Orange</div>
+            <div class="story-role">TransportPCE contributor</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-card">
+        <div class="story-quote">OpenDaylight's clustering and sharded data store give us the horizontal scalability we need for managing thousands of network devices with sub-second convergence in production environments.</div>
+        <div class="story-author">
+          <div class="story-avatar">ER</div>
+          <div>
+            <div class="story-name">Ericsson</div>
+            <div class="story-role">Core contributor since 2013</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="story-card">
+        <div class="story-quote">As an SDN controller within the ONAP ecosystem, OpenDaylight provides the NETCONF-based device management layer that powers automated service orchestration for telecom operators globally.</div>
+        <div class="story-author">
+          <div class="story-avatar">LF</div>
+          <div>
+            <div class="story-name">LF Networking</div>
+            <div class="story-role">ONAP integration partner</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community" style="padding-top: 60px;">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Community</span>
+        <h2>Built in the open,<br/><em>by the community.</em></h2>
+      </div>
+      <p>OpenDaylight thrives because of its contributors. Whether you file an issue, review a patch, or maintain a project, you are part of the story.</p>
+    </div>
+
+    <div class="community-grid">
+      <a href="https://github.com/opendaylight" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        </div>
+        <h4>Gerrit &amp; GitHub</h4>
+        <p>All development happens in the open on Gerrit (primary) with mirrors on GitHub. Submit patches, review code, and track changes across 108 repositories.</p>
+        <span class="comm-link">View repositories &#8594;</span>
+      </a>
+
+      <a href="https://linuxfoundation.zulipchat.com" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h4>Zulip Chat</h4>
+        <p>The community has moved to Zulip for real-time discussion. Find project-specific streams, ask questions, and participate in design discussions.</p>
+        <span class="comm-link">Join the conversation &#8594;</span>
+      </a>
+
+      <a href="https://lf-opendaylight.atlassian.net/wiki" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </div>
+        <h4>Wiki &amp; Meetings</h4>
+        <p>Project documentation, meeting notes, and governance information live on the Confluence wiki. Weekly TSC calls are open to everyone.</p>
+        <span class="comm-link">Browse the wiki &#8594;</span>
+      </a>
+
+      <a href="https://lf-opendaylight.atlassian.net/wiki/spaces/ODL/pages/12529711/Technical+Steering+Committee+TSC" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <h4>TSC Governance</h4>
+        <p>A Technical Steering Committee guides the project's direction. Meetings, decisions, and election records are all public and documented.</p>
+        <span class="comm-link">View TSC page &#8594;</span>
+      </a>
+
+      <a href="https://docs.opendaylight.org" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+        </div>
+        <h4>Documentation</h4>
+        <p>Comprehensive documentation covers getting started guides, developer tutorials, project-level guides, and release notes for every named release.</p>
+        <span class="comm-link">Read the docs &#8594;</span>
+      </a>
+
+      <a href="https://lists.opendaylight.org/g/tsc" class="comm-card">
+        <div class="comm-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h4>Mailing Lists</h4>
+        <p>The TSC, developer, and announcement lists on Groups.io keep the community connected. Subscribe to stay current on releases, decisions, and discussions.</p>
+        <span class="comm-link">Subscribe &#8594;</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TSC GOVERNANCE -->
+<section id="governance">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <span class="kicker section-tag">/ Governance</span>
+        <h2>Technical Steering<br/><em>Committee.</em></h2>
+      </div>
+      <p>The TSC oversees design and development activities, sets release quality standards, mediates technical conflicts, and organizes inter-project collaboration across the OpenDaylight ecosystem.</p>
+    </div>
+
+    <div class="tsc-grid">
+      <div class="tsc-info">
+        <p>The TSC is responsible for simultaneous release dates, release quality standards, technical best practices, monitoring technical progress, and serving as OpenDaylight's liaison with other consortiums and groups.</p>
+        <p>TSC meetings are held weekly on Thursdays at 09:00 Pacific / 16:00 UTC. All meetings are open to the community and minutes are published on the wiki.</p>
+        <p>Join via Zoom: <a href="https://zoom-lfx.platform.linuxfoundation.org/meeting/98720081270?password=b23b0db3-c169-4456-9ac6-a67b535466f3" style="color: var(--signal); text-decoration: underline; text-underline-offset: 3px;">Register/Join Here</a></p>
+        <p>Elections for Committer-At-Large seats are held annually. All OpenDaylight committers and Active Community Members can nominate themselves, run for election, and vote.</p>
+
+        <div class="tsc-links">
+          <a href="https://lf-opendaylight.atlassian.net/wiki/spaces/ODL/pages/12529711/Technical+Steering+Committee+TSC" class="btn btn-primary">
+            TSC Wiki
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a href="https://lists.opendaylight.org/g/tsc" class="btn btn-ghost">Mailing List</a>
+        </div>
+      </div>
+
+      <div class="tsc-members-card">
+        <h4>/ Current TSC Members</h4>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Robert.png" alt="Robert Varga"></div>
+          <div>
+            <div class="tsc-member-name">Robert Varga</div>
+            <div class="tsc-member-org">PANTHEON.tech</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Ivan.png" alt="Ivan Hrasko"></div>
+          <div>
+            <div class="tsc-member-name">Ivan Hrasko</div>
+            <div class="tsc-member-org">PANTHEON.tech</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Daniel.png" alt="Daniel de la Rosa."></div>
+          <div>
+            <div class="tsc-member-name">Daniel De La Rosa</div>
+            <div class="tsc-member-org">Kratos Defense &amp; Security Solutions</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Venkatrangan.png" alt="Venkatrangan Govindarajan"></div>
+          <div>
+            <div class="tsc-member-name">Venkatrangan Govindarajan</div>
+            <div class="tsc-member-org">Nvidia</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Gilles.png" alt="Gilles Thouenon"></div>
+          <div>
+            <div class="tsc-member-name">Gilles Thouenon</div>
+            <div class="tsc-member-org">Orange</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/davidarjona.png" alt="David Arjona"></div>
+          <div>
+            <div class="tsc-member-name">David Arjona</div>
+            <div class="tsc-member-org">UASLP</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Anil.png" alt="Anil Shashikumar Belur"></div>
+          <div>
+            <div class="tsc-member-name">Anil Shashikumar Belur</div>
+            <div class="tsc-member-org">Linux Foundation</div>
+          </div>
+        </div>
+        <div class="tsc-note">Meeting minutes and election records available on the <a href="https://lf-opendaylight.atlassian.net/wiki/spaces/ODL/pages/12529711/Technical+Steering+Committee+TSC" style="color: var(--signal);">TSC wiki page</a>.</div>
+
+        <h4 style="margin-top: 28px;">/ LF Staff</h4>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Casey.png" alt="Casey Cain"></div>
+          <div>
+            <div class="tsc-member-name">Casey Cain</div>
+            <div class="tsc-member-org">Sr. Technical Community Architect</div>
+          </div>
+        </div>
+        <div class="tsc-member">
+          <div class="tsc-member-avatar"><img src="./src/images/Jill.png" alt="Jill Lovato"></div>
+          <div>
+            <div class="tsc-member-name">Jill Lovato</div>
+            <div class="tsc-member-org">Director, Marketing Communications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOIN CTA -->
+<section class="join-cta" id="join">
+  <div class="container">
+    <span class="kicker section-tag">/ Join the Project</span>
+    <h2>The future of networking is <em>open source.</em></h2>
+    <p>Get OpenDaylight project updates, release announcements, and community news. Or jump straight into the code, the wiki, or the next TSC call.</p>
+
+    <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed (demo)');">
+      <input type="email" placeholder="you@network.dev" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div class="small">No spam. Unsubscribe anytime. . <a href="https://lfnetworking.org" style="color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px;">Or join LF Networking as a member organization &#8594;</a></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="#">
+          <div class="logo-mark">
+            <img src="./src/images/odl-logo.svg" alt="OpenDaylight logo">
+          </div>
+          <div class="logo-text">
+            Open<b style="color: var(--signal); font-weight: 500;">Daylight</b>
+            <span>An LF Networking Project</span>
+          </div>
+        </a>
+        <p>The most widely deployed open source SDN platform, providing model-driven, programmable network control at carrier scale. Part of LF Networking since 2018.</p>
+      </div>
+
+      <div class="footer-col">
+        <h5>Platform</h5>
+        <ul>
+          <li><a href="https://docs.opendaylight.org/en/latest/downloads.html">Downloads</a></li>
+          <li><a href="https://docs.opendaylight.org">Documentation</a></li>
+          <li><a href="https://docs.opendaylight.org/en/stable-vanadium/release-notes/index.html">Release Notes</a></li>
+          <li><a href="https://hub.docker.com/r/opendaylight/opendaylight/tags">Docker Hub</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Develop</h5>
+        <ul>
+          <li><a href="https://git.opendaylight.org/gerrit/">Gerrit</a></li>
+          <li><a href="https://github.com/opendaylight">GitHub</a></li>
+          <li><a href="https://lf-opendaylight.atlassian.net">Jira</a></li>
+          <li><a href="https://github.com/opendaylight">GitHub Actions</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Community</h5>
+        <ul>
+          <li><a href="https://lf-opendaylight.atlassian.net/wiki">Wiki</a></li>
+          <li><a href="https://linuxfoundation.zulipchat.com">Zulip</a></li>
+          <li><a href="https://lf-opendaylight.atlassian.net/wiki/spaces/ODL/pages/12529711/Technical+Steering+Committee+TSC">TSC</a></li>
+          <li><a href="https://lists.opendaylight.org/g/tsc">Mailing Lists</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>About</h5>
+        <ul>
+          <li><a href="https://lfnetworking.org">LF Networking</a></li>
+          <li><a href="https://lfnetworking.org/wp-content/uploads/sites/7/2022/04/LF-Networking-Fund-Charter-updated-2020-04-29.pdf">LF Networking Fund Charter</a></li>
+          <li><a href="https://docs.opendaylight.org/en/latest/_static/OpenDaylight-Technical-Charter-LFN-Projects-LLC-FINAL.pdf">OpenDaylight Technical Charter</a></li>
+          <li><a href="https://www.linuxfoundation.org/legal/trademark-usage">Trademark</a></li>
+          <li><a href="mailto:info@lfnetworking.org">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding: 24px 0; margin-bottom: 24px; display: flex; align-items: center; gap: 20px;">
+      <a href="https://www.yourkit.com/java/profiler/"><img src="./src/images/yourkit.png" alt="YourKit" style="height: 28px; opacity: 0.7;"></a>
+      <p style="font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; margin: 0;">YourKit supports the OpenDaylight project with its full-featured <a href="https://www.yourkit.com/java/profiler/" style="color: var(--text-muted);">Java Profiler</a>. YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/" style="color: var(--text-muted);">YourKit Java Profiler</a> and <a href="https://www.yourkit.com/dotnet-profiler/" style="color: var(--text-muted);">YourKit .NET Profiler</a>, innovative and intelligent tools for profiling Java and .NET applications.</p>
+    </div>
+
+    <div class="footer-bottom">
+      <div>&copy; 2026 THE LINUX FOUNDATION . ALL RIGHTS RESERVED . <a href="https://www.linuxfoundation.org/legal/privacy-policy" style="color: var(--text-muted);">PRIVACY</a> . <a href="https://www.linuxfoundation.org/legal/trademark-usage" style="color: var(--text-muted);">TRADEMARK</a></div>
+      <div class="footer-social">
+        <a href="https://github.com/opendaylight" aria-label="GitHub"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.09.68-.22.68-.5 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.57 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.55-1.13-4.55-5.05 0-1.12.39-2.03 1.03-2.74-.1-.26-.45-1.3.1-2.7 0 0 .84-.27 2.75 1.05A9.5 9.5 0 0 1 12 7.36c.85.01 1.71.12 2.51.34 1.91-1.32 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.71 1.03 1.62 1.03 2.74 0 3.93-2.34 4.79-4.57 5.04.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.81 0 .27.18.59.69.49C19.14 20.61 22 16.78 22 12.25 22 6.59 17.52 2 12 2z"/></svg></a>
+        <a href="https://www.linkedin.com/company/lf-networking" aria-label="LinkedIn"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.34 17V10H6v7zM7.17 8.92a1.36 1.36 0 1 0 0-2.71 1.36 1.36 0 0 0 0 2.71zM18 17v-3.83c0-2.27-1.21-3.32-2.83-3.32a2.44 2.44 0 0 0-2.21 1.22V10h-2.34v7h2.34v-3.91c0-1.04.39-1.62 1.21-1.62.84 0 1.45.5 1.45 1.65V17z"/></svg></a>
+        <a href="https://www.youtube.com/@LFNetworking" aria-label="YouTube"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.76-1.77C18.25 5 12 5 12 5s-6.25 0-7.84.43A2.5 2.5 0 0 0 2.4 7.2C2 8.78 2 12 2 12s0 3.22.4 4.8a2.5 2.5 0 0 0 1.76 1.77C5.75 19 12 19 12 19s6.25 0 7.84-.43a2.5 2.5 0 0 0 1.76-1.77C22 15.22 22 12 22 12s0-3.22-.4-4.8zM10 15V9l5.2 3-5.2 3z"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
