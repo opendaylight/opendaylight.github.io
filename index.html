@@ -981,42 +981,55 @@
     margin-right: auto;
     line-height: 1.6;
   }
-  .newsletter-form {
-    display: flex;
-    gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    padding: 6px;
-    max-width: 480px;
+  /* ---------- MAILING LIST CARDS ---------- */
+  .ml-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 780px;
     margin: 0 auto 24px;
-    transition: border-color 0.3s;
   }
-  .newsletter-form:focus-within {
+  .ml-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    background: var(--surface);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+  }
+  .ml-card:hover {
+    background: var(--surface-2);
     border-color: var(--signal);
-    box-shadow: 0 0 0 4px rgba(245,166,35,0.1);
+    transform: translateY(-4px);
   }
-  .newsletter-form input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text);
-    padding: 12px 20px;
-    font-family: var(--sans);
-    font-size: 0.95rem;
-    outline: none;
+  .ml-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--signal), var(--signal-2));
+    transition: width 0.4s;
   }
-  .newsletter-form input::placeholder { color: var(--text-dim); }
-  .newsletter-form button {
-    padding: 12px 24px;
-    background: var(--signal);
-    color: var(--void);
-    border-radius: 999px;
+  .ml-card:hover::after { width: 100%; }
+  .ml-card h4 {
+    font-family: var(--display);
     font-weight: 500;
-    font-size: 0.9rem;
-    transition: background 0.2s;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
   }
-  .newsletter-form button:hover { background: var(--text); }
+  .ml-card p {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: 16px;
+  }
   .join-cta .small {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -1120,8 +1133,7 @@
     .footer-grid { grid-template-columns: 1fr; }
     .topbar-right { display: none; }
     .header-actions .btn-ghost { display: none; }
-    .newsletter-form { flex-direction: column; border-radius: 16px; padding: 8px; }
-    .newsletter-form button { border-radius: 12px; }
+    .ml-grid { grid-template-columns: 1fr; max-width: 100%; }
     .arch-meta { flex-direction: column; gap: 16px; }
   }
 
@@ -1807,13 +1819,26 @@
   <div class="container">
     <span class="kicker section-tag">/ Join the Project</span>
     <h2>The future of networking is <em>open source.</em></h2>
-    <p>Get OpenDaylight project updates, release announcements, and community news. Or jump straight into the code, the wiki, or the next TSC call.</p>
+    <p>Subscribe to OpenDaylight mailing lists for project updates, release announcements, and community discussion.</p>
 
-    <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed (demo)');">
-      <input type="email" placeholder="you@network.dev" required>
-      <button type="submit">Subscribe</button>
-    </form>
-    <div class="small">No spam. Unsubscribe anytime. . <a href="https://lfnetworking.org" style="color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px;">Or join LF Networking as a member organization &#8594;</a></div>
+    <div class="ml-grid">
+      <a href="https://lists.opendaylight.org/g/announce" target="_blank" rel="noopener" class="ml-card">
+        <h4>Announce</h4>
+        <p>Release announcements, security advisories, and project-wide news.</p>
+        <span class="comm-link">Subscribe &rarr;</span>
+      </a>
+      <a href="https://lists.opendaylight.org/g/TSC" target="_blank" rel="noopener" class="ml-card">
+        <h4>TSC</h4>
+        <p>Technical Steering Committee meeting agendas, minutes, and governance updates.</p>
+        <span class="comm-link">Subscribe &rarr;</span>
+      </a>
+      <a href="https://lists.opendaylight.org/g/Discuss" target="_blank" rel="noopener" class="ml-card">
+        <h4>Discuss</h4>
+        <p>Cross-project technical discussion, questions, and community collaboration.</p>
+        <span class="comm-link">Subscribe &rarr;</span>
+      </a>
+    </div>
+    <div class="small">Hosted on Groups.io. Unsubscribe anytime. <a href="https://enrollment.lfx.linuxfoundation.org?project=lfn" style="color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px;">Or join LF Networking as a member organization &#8594;</a></div>
   </div>
 </section>
 
